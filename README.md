@@ -12,6 +12,7 @@
 - 🏗️ **架构文档**：[`starter_kit/docs/ARCHITECTURE.md`](starter_kit/docs/ARCHITECTURE.md)
 - 🧭 **新手引导与视觉叙事**：[`starter_kit/docs/NEWBIE_GUIDE.md`](starter_kit/docs/NEWBIE_GUIDE.md)
 - 🧪 **证据包（人工评分入口）**：[`starter_kit/evidence/README.md`](starter_kit/evidence/README.md)
+- 🧑‍🏫 **大白话学习笔记（每一步的目的/原理/实现/踩坑/复现）**：[`starter_kit/docs/LEARNING_JOURNEY.md`](starter_kit/docs/LEARNING_JOURNEY.md)
 - ⚡ **立即复现**：`python3 starter_kit/evaluator.py --level all`
 
 > 以下为官方赛题发布包原始内容。
