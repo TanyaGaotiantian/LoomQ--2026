@@ -1,99 +1,66 @@
 # LoomQ 人工评分证据
 
-这份文件是人工评分材料的统一入口。请直接编辑它，只填写要申报的项目。截图、原始结果或图表统一放在 `starter_kit/evidence/files/`，也可以引用 `starter_kit/` 中已有的代码和文档。
+> 本队伍申报项：**L2 交互体验、工程与产品化、自定义量子 RISC-V Bonus、
+> 新手引导与视觉叙事 Bonus**。L1 真机未申报（评测环境无平台账号，接入层已
+> 就绪，见 `docs/REAL_MACHINE.md`）。
 
-证据包是可选的。没有申报某项人工分时，留空即可，不影响自动评分。
-
-## 提交前填写
-
-把要申报项目的方框改成 `[x]`，并填写对应内容：
+## 申报项目
 
 - [ ] L1 真机
-- [ ] L2 交互体验
-- [ ] 工程与产品化
-- [ ] 自定义量子 RISC-V Bonus
-- [ ] 新手引导与视觉叙事 Bonus
-
-## L1 真机
-
-每个有效真机平台计 5 分，最多两个平台。模拟器不计真机分。每个平台复制并填写一次下面的信息：
-
-```text
-平台名称：[填写]
-平台 job ID：[填写]
-运行时间：[填写，带时区]
-shots：[填写]
-实际执行的 QASM：[填写仓库内路径]
-平台返回的原始结果：[填写仓库内路径]
-任务页截图：[选填，填写仓库内路径]
-```
-
-建议把文件放进 `evidence/files/`，比如：
-
-```text
-evidence/files/spinq-circuit.qasm
-evidence/files/spinq-result.json
-evidence/files/spinq-screenshot.png
-```
-
-工作人员会核对 job ID、运行时间、电路、shots 和原始结果。截图只能辅助说明，不能代替 job ID 和原始结果。
+- [x] L2 交互体验
+- [x] 工程与产品化
+- [x] 自定义量子 RISC-V Bonus
+- [x] 新手引导与视觉叙事 Bonus
 
 ## L2 交互体验
 
-请填写：
-
 ```text
-启动界面或 CLI 的命令：[填写]
-测试入口或页面地址：[填写，没有则写“无”]
+启动界面或 CLI 的命令：python3 starter_kit/cli.py --guide
+测试入口或页面地址：无（CLI）
 用于交互体验评测的 3 个用户任务：
-1. [填写]
-2. [填写]
-3. [填写]
-截图或演示视频：[选填，填写仓库内路径或稳定只读链接]
+1. 零基础首跑：输入 "生成一个 3 比特 GHZ 态并进行全测量"，应看到 ```qasm 电路、
+   自验通过标记、以及三平台（spinq/originq/braket）的 ASCII 柱状图结果。
+2. 错误恢复：输入 "我想制备一个贝尔态，但这段代码报错了，帮我修好：H q[0]; CX q[0] q[1]"，
+   应得到修复后的完整电路并自验通过（保真度 ≥ 0.97）。
+3. 智能选后端：输入 "我需要运行一个 15 比特电路，且零排队等待，选哪个平台？"，
+   回复应包含规范后端标识（如 braket_local_simulator / spinq_taurus_simulator 等）。
+截图或演示视频：无（工作人员可按上一条命令在评测环境直接运行最终代码）
 ```
-
-工作人员会在组委会统一模型环境中运行最终代码，测试新手是否看得懂、出错后能否得到有效帮助、结果是否清楚，以及多轮回答是否一致。选手自己的对话截图只用于说明产品流程，不直接证明得分。
 
 ## 工程与产品化
 
-已有内容可以直接引用主 README 或其他项目文档，不必复制到本目录。
-
 ```text
-干净环境中的构建和启动命令：[填写命令或文档路径]
-架构说明：[填写文档路径，或用几句话说明主要模块]
-目标用户和使用场景：[填写]
-完整使用流程：[填写文档、截图或演示路径]
+干净环境中的构建和启动命令：
+  零依赖：python3 starter_kit/evaluator.py --level all
+  容器基线：docker build -t loomq-submission starter_kit/ && docker run --rm loomq-submission
+  全量测试：python3 starter_kit/tests/run_all.py
+  交互入口：python3 starter_kit/cli.py --guide
+架构说明：starter_kit/docs/ARCHITECTURE.md（模块职责、数据流、设计决策、验证矩阵）；
+  主 README：starter_kit/README.md
+目标用户和使用场景：没有任何量子/编程背景的跨界创作者（视觉、教育、科普等），
+  用自然语言让三家量子云平台执行并理解第一个量子实验。
+完整使用流程：starter_kit/docs/NEWBIE_GUIDE.md + CLI 内建 guide 引导。
 ```
-
-工作人员会按最终 commit 实际构建和启动，并检查文档与代码是否一致、产品是否真的降低了量子计算的使用门槛。
 
 ## 自定义量子 RISC-V Bonus
 
-以下三项必须齐全且测试通过，才获得 8 分：
-
 ```text
-指令编码规格：[填写文档路径]
-模拟器扩展实现：[填写代码路径]
-端到端测试命令：[填写命令或文档路径]
+指令编码规格：starter_kit/quantum_riscv/encoding_spec.md
+模拟器扩展实现：starter_kit/quantum_riscv/riscv_quantum_emulator.py
+             （fork 官方 riscv_emulator.py，官方指令语义原样保留）
+端到端测试命令：python3 starter_kit/quantum_riscv/run_e2e.py   （9/9 PASS）
 ```
 
 ## 新手引导与视觉叙事 Bonus
 
-请填写已有材料的路径，不要求为评分另写一套文档：
-
 ```text
-零基础首次运行指南：[填写]
-量子概念解释：[填写]
-结果可视化：[填写]
-错误恢复或无障碍引导：[填写]
+零基础首次运行指南：starter_kit/docs/NEWBIE_GUIDE.md（§1 首次运行引导）
+量子概念解释：starter_kit/docs/NEWBIE_GUIDE.md（§2 概念大白话表）
+结果可视化：starter_kit/cli.py（ASCII 柱状图）+ NEWBIE_GUIDE §3
+错误恢复或无障碍引导：NEWBIE_GUIDE §4（容错提示、help/guide 命令、自验失败透明化）
 ```
 
-以上四项各 1 分。普通项目 README 完整不代表自动获得 Bonus。
+## 提交规则确认
 
-## 提交规则
-
-- 所有材料都要在截止前进入最终提交的 commit，工作人员不接受截止后补交。
-- 外部视频可以用稳定只读链接，源码、原始结果和复现命令应保存在仓库中。
-- 整个 fork commit 的归档包不得超过 100 MiB。
-- 不要提交 API Key、Token、Cookie、个人身份信息或平台账户隐私。
-- 如申报 L1 真机分，在最终提交 Issue 的 `Hardware evidence` 中填写 `starter_kit/evidence/README.md`。
+- 全部材料已进入最终提交 commit（见仓库归档）。
+- 归档体积远小于 100 MiB；无 API Key/Token/个人隐私。
