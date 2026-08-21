@@ -7,6 +7,13 @@
 >
 > 如果你只想快点跑起来，直接跳到文末的 [📋 完整复现指南](#第-11-步让别人复现这份代码的完整指南)；
 > 如果你想理解"我们到底造了个什么东西"，请从头慢慢读。
+>
+> **📖 配套文档（推荐三份一起读）**：
+> - **本笔记**（LEARNING_JOURNEY.md）：整条路线怎么走、每步踩了什么坑；
+> - [🔬 知识深讲](QUANTUM_DEEP_DIVE.md)：每个知识点（复数、矩阵、12 个门、
+>   编译器、机器码、LLM…）都展开讲透，哪里不懂点哪里；
+> - [🐣 小白复现完全指南](REPRODUCE_GUIDE.md)：终端怎么开、命令敲什么、
+>   输出代表什么、在哪个文件改代码、改了会怎样——照做即可。
 
 ---
 
@@ -25,6 +32,8 @@
 - [第 10 步：Bonus——给 CPU 增加"量子指令"](#第-10-步bonus给-cpu-增加量子指令)
 - [第 11 步：让别人复现这份代码的完整指南](#第-11-步让别人复现这份代码的完整指南)
 - [📚 词汇表（写给新手）](#词汇表写给新手)
+- [🔬 附录 A：知识深讲（每个知识点讲透）](QUANTUM_DEEP_DIVE.md)
+- [🐣 附录 B：小白复现完全指南（照做即可）](REPRODUCE_GUIDE.md)
 
 ---
 
@@ -206,6 +215,12 @@ n 个量子比特 = 一个长度 2ⁿ 的数组。比如 2 个量子比特，数
 - "纠缠"这种词很吓人。
   → 我们只需要记住结论：纠缠 = 结果"同面"，用它来验证模拟器算得对不对。
 
+### 📖 想深入？
+
+- 复数和矩阵到底怎么算？→ [知识深讲第 1 章](QUANTUM_DEEP_DIVE.md#第-1-章-数学热身向量矩阵复数概率弧度)
+- 量子比特的数学表示（|0⟩、|1⟩、叠加态）？→ [知识深讲第 2 章](QUANTUM_DEEP_DIVE.md#第-2-章-量子比特的数学表示)
+- 测量为什么"坍缩"、纠缠为什么"同面"？→ [知识深讲第 4 章](QUANTUM_DEEP_DIVE.md#第-4-章-测量纠缠shots位序大小端)
+
 ### 🔗 和下一步的关系
 
 懂了量子概念，接下来要"知己知彼"——摸清三家平台到底认什么语法，
@@ -292,6 +307,11 @@ for gate in ["h", "x", "s", "sdg", "t", "tdg", "cx", "cnot", "cu1",
   → 以**比赛契约为准**生成 OriginIR（契约说组织方解析器两个参数写法都接受），
   本地 pyqpanda 只作为"基本语法"的交叉检查。
 
+### 📖 想深入？
+
+- 三种方言的语法逐条对照表？→ [知识深讲第 6 章](QUANTUM_DEEP_DIVE.md#第-6-章-三种方言的语法逐条讲)
+- 门分解恒等式为什么成立？→ [知识深讲第 6.4 节](QUANTUM_DEEP_DIVE.md#64-门分解恒等式为什么能拼)
+
 ### 🔗 和下一步的关系
 
 摸清了"方言"后，我们知道输入是 OpenQASM 2.0、输出有三种格式。
@@ -357,6 +377,11 @@ class Circuit:
   绝对不执行输入里的代码。这是"防御性编程"。
 - 一开始正则写得太松，`rz(0.5) q[1]` 和 `rz(0.5, 0.3) q[1]` 都匹配了。
   → 收紧规则：白名单里只有 `rz/ry/cu1` 允许一个参数，别的门带参数就报错。
+
+### 📖 想深入？
+
+- 词法分析 / 语法树 / 递归下降到底是怎么一回事？→ [知识深讲第 7 章](QUANTUM_DEEP_DIVE.md#第-7-章-程序是怎么懂代码的解析器与编译器)
+- 正则表达式怎么写？跟着第 4 步代码里的例子看即可。
 
 ### 🔗 和下一步的关系
 
@@ -439,6 +464,12 @@ def sample_counts(circuit, shots):
   这个 bug 只靠"Bell 态"这种简单电路测不出来（因为不触发），
   必须靠**随机电路**才能抓到——所以测试要覆盖各种门组合。
 
+### 📖 想深入？
+
+- 12 个门各自的矩阵和效果（逐个讲）？→ [知识深讲第 3 章](QUANTUM_DEEP_DIVE.md#第-3-章-12-个量子门逐个讲矩阵和效果)
+- 态矢量 / 复数 / 概率的数学？→ [知识深讲第 1、2 章](QUANTUM_DEEP_DIVE.md#第-2-章-量子比特的数学表示)
+- 亲手验证 H|0⟩ = 50/50？→ [复现指南实验 6](REPRODUCE_GUIDE.md#76-实验-6看模拟器的门矩阵代码里的数学)
+
 ### 🔗 和下一步的关系
 
 地基打好了：电脑能"看懂"电路（解析器）也能"算"电路（模拟器）。
@@ -514,6 +545,11 @@ Braket 的三个"硬骨头"门的分解方案（都是精确恒等式）：
   症状：Braket 跑 Grover 电路结果 50/50 而不是预期的"111 占绝大多数"。
   → 对照公式逐行核对，发现 tdg 的目标比特写错，改回 `q[b]` 后通过。
   教训：**照抄公式也要逐行对**，抄错一个字母结果就错。
+
+### 📖 想深入？
+
+- 每个门在 Braket 里叫什么、为什么不支持要分解？→ [知识深讲第 6.2 节](QUANTUM_DEEP_DIVE.md#62-openqasm-30braket-的母语)
+- 亲手看"一种电路 → 三种方言"？→ [复现指南实验 3](REPRODUCE_GUIDE.md#74-实验-3看一种电路--三种方言)
 
 ### 🔗 和下一步的关系
 
@@ -593,6 +629,12 @@ def run_on_backend(qasm_str, target, shots):
 - **Braket 大端**：`x q[0]` 它返回 `"10"`，我们期望 `"01"`。
   → 用"裁判校验法"自动反转，而不是写死。
 - 这两个坑说明：**第三方库的行为不能靠猜，要么实测，要么用裁判兜底**。
+
+### 📖 想深入？
+
+- Hellinger 公式逐字拆解 + 手算例子？→ [知识深讲第 5 章](QUANTUM_DEEP_DIVE.md#第-5-章-保真度公式拆解hellinger-逐字讲)
+- 大小端到底是怎么回事？→ [知识深讲第 4.5 节](QUANTUM_DEEP_DIVE.md#45-位序大小端counts-的-key-从哪边读)
+- 亲手改 shots 看统计涨落？→ [复现指南实验 4](REPRODUCE_GUIDE.md#75-实验-4改采样次数-shots看统计涨落)
 
 ### 🔗 和下一步的关系
 
@@ -675,6 +717,11 @@ L1（翻译 + 执行）完工了：我们已经能"让三家平台跑同一份�
   不是作弊。
 - **离线模式如果目标态检测不到怎么办？** 只做结构检查（能解析、门合法、
   有测量），其余交给模型质量——因为正式评测一定有模型在跑。
+
+### 📖 想深入？
+
+- 大模型为什么能"听懂人话"？提示词工程怎么做？→ [知识深讲第 9 章](QUANTUM_DEEP_DIVE.md#第-9-章-大语言模型llm与-apiai-怎么听懂人话)
+- 亲手和 CLI 聊天、改引导文案？→ [复现指南第 6 课](REPRODUCE_GUIDE.md#第-6-课-玩-l2-智能体-cli不用-api-key) 与 [实验 5](REPRODUCE_GUIDE.md#76-实验-5改-cli-的新手引导文案)
 
 ### 🔗 和下一步的关系
 
@@ -770,6 +817,11 @@ addi x1, x1, 5       # r1 = r1 + 5（两种分支都会执行这行）
   → 我们选择**支持超集**（解析器接受括号嵌套），顺便做了随机测试，
   反而把编译器练得更稳。
 
+### 📖 想深入？
+
+- 解析树 / 递归下降 / 寄存器分配 / 标签跳转？→ [知识深讲第 7 章](QUANTUM_DEEP_DIVE.md#第-7-章-程序是怎么懂代码的解析器与编译器)
+- 亲手改 L3 输入程序看汇编变化？→ [复现指南实验 7](REPRODUCE_GUIDE.md#78-实验-7改-l3-的输入程序)
+
 ### 🔗 和下一步的关系
 
 L3 证明了"量子 + 经典"能编译。而 Bonus 更进一步：让 CPU 直接认识
@@ -854,6 +906,11 @@ meas x2, x4       # 测第二个 → x4
 - 测量后状态已经坍缩，测试里检查"概率分布"时把测量后的分布当成了测量前的。
   → 测试逻辑修正：只看"非零概率的状态"是不是只有 00 和 11。
 
+### 📖 想深入？
+
+- 机器码的分段、opcode、为什么位域会打架？→ [知识深讲第 8 章](QUANTUM_DEEP_DIVE.md#第-8-章-指令集与机器码cpu-怎么认指令)
+- 亲手跑 Bonus 的 9 项端到端测试？→ [复现指南第 5 课](REPRODUCE_GUIDE.md#第-5-课-跑-bonus-端到端测试9-项)
+
 ### 🔗 和下一步的关系
 
 所有"硬核"部分都完成了。但产品要给人用——我们加了一个交互式命令行
@@ -867,126 +924,63 @@ meas x2, x4       # 测第二个 → x4
 ### 🎯 这一步要干什么
 
 比赛评分有一条：**"一键 setup + run 可复现"**——评委要在干净环境里按 README
-把我们的代码跑起来。所以我们把"如何复现"写到最详细。
+把我们的代码跑起来。所以我们把"如何复现"写成了**两份**：
 
-### 📋 完整复现指南（请按顺序执行）
+1. 下面的**精简快速启动**：10 分钟内跑完全部验证（命令 + 期望输出）。
+2. [🐣 小白复现完全指南（REPRODUCE_GUIDE.md）](REPRODUCE_GUIDE.md)：
+   **手把手到极致**——终端怎么打开、每个命令敲什么、输出代表什么、
+   在哪个文件改代码、改了会看到什么变化、7 个动手实验、常见问题。
+   完全没摸过终端的同学请直接去读那份，下面的精简版给已经会点终端的人。
 
-#### 环境要求
+### ⚡ 精简快速启动（命令 + 期望输出 + 含义）
 
-| 项目 | 要求 | 说明 |
-|---|---|---|
-| Python | 3.9 ~ 3.11 均可 | 官方容器是 3.10；我们零第三方依赖，所以版本很宽容 |
-| 操作系统 | macOS / Linux / Windows 均可 | 命令用 macOS/Linux 风格（Windows 用 `py` 代替 `python3`） |
-| 网络 | 第一次装 SDK 需要联网 | 之后跑公开自测不需要网络（L2 调模型时才需要） |
-
-#### 第一步：获取代码
+**环境要求**：Python 3.9+（macOS/Linux 用 `python3`，Windows 用 `python` 或 `py`）；
+不需要安装任何第三方包（我们的核心代码零依赖）。
 
 ```bash
+# ① 拿到代码（或直接网页下载 ZIP 解压）
 git clone https://github.com/TanyaGaotiantian/LoomQ--2026.git
 cd LoomQ--2026
-```
 
-#### 第二步：直接跑公开自测（零依赖，最快）
-
-```bash
+# ② 公开自测（核心验证：6 项全过）
 python3 starter_kit/evaluator.py --level all
-```
+# 期望输出：6 行 [PASS] + {"passed": 6, "failed": 0, "total": 6}
+# 含义：L1 三平台翻译正确、L2 能生成 GHZ、L3 分支编译正确
 
-**期望输出**（6 项全部 PASS，退出码 0）：
-
-```text
-[PASS] l1:bell.qasm:spinq: fidelity threshold met
-[PASS] l1:bell.qasm:originq: fidelity threshold met
-[PASS] l1:ghz3.qasm:spinq: fidelity threshold met
-[PASS] l1:ghz3.qasm:originq: fidelity threshold met
-[PASS] l2:public-ghz: response contains parseable QASM
-[PASS] l3:public-branch: public branch semantics passed
-{"passed": 6, "failed": 0, "total": 6}
-```
-
-> 这一步**不需要安装任何第三方包**，因为我们核心代码只用 Python 标准库。
-> 你的电脑只要有 Python 3.9+ 就能跑。
-
-#### 第三步（可选）：装 SDK 体验"真实平台执行"
-
-```bash
-python3 -m venv venv
-./venv/bin/pip install amazon-braket-sdk pyqpanda
-# 量旋 spinqit 需要 Python 3.10（官方说明），装不上也没关系，
-# 程序会自动用内置模拟器兜底（结果一致）。
-./venv/bin/python starter_kit/evaluator.py --level l1 --target spinq,originq,braket
-```
-
-**期望输出**：3 平台 × 2 电路 = 6 项 PASS；`meta.engine` 在装有 SDK 的平台
-显示 `sdk`，没装的显示 `internal`——两条路径结果一致。
-
-#### 第四步：跑全量单元测试（36 项）
-
-```bash
+# ③ 全量单元测试（36 项小功能体检）
 python3 starter_kit/tests/run_all.py
-```
+# 期望输出：Ran 36 tests ... OK
 
-**期望输出**：`Ran 36 tests ... OK`
-
-#### 第五步：跑 Bonus 端到端测试
-
-```bash
+# ④ Bonus 端到端（量子 RISC-V 扩展）
 python3 starter_kit/quantum_riscv/run_e2e.py
-```
+# 期望输出：结果: 9 通过, 0 失败
 
-**期望输出**：`结果: 9 通过, 0 失败`
-
-#### 第六步：体验 L2 智能体 CLI（不用 API Key）
-
-```bash
+# ⑤ 玩智能体 CLI（离线模式，无需 Key；输入 exit 退出）
 python3 starter_kit/cli.py --guide
-```
+# 依次试：
+#   生成一个 3 比特 GHZ 态并进行全测量
+#   我想制备一个贝尔态，但这段代码报错了，帮我修好：H q[0]; CX q[0] q[1]
+#   我需要运行一个 15 比特电路，且零排队等待，选哪个平台？
 
-依次输入这三句话，观察输出：
-
-1. `生成一个 3 比特 GHZ 态并进行全测量`
-   → 得到 ```qasm 电路 + "自验通过" + 三平台 ASCII 柱状图。
-2. `我想制备一个贝尔态，但这段代码报错了，帮我修好：H q[0]; CX q[0] q[1]`
-   → 得到修复后的电路，自验通过。
-3. `我需要运行一个 15 比特电路，且零排队等待，选哪个平台？`
-   → 回复包含规范平台 id（如 `braket_local_simulator`）。
-
-#### 第七步（可选）：用自己的 DeepSeek Key 体验真实 LLM 路径
-
-```bash
-export LOOMQ_LLM_BASE_URL=https://api.deepseek.com
-export LOOMQ_LLM_API_KEY=<你自己的Key>
-export LOOMQ_LLM_MODEL=deepseek-v4-flash
-export LOOMQ_LLM_TIMEOUT_SECONDS=120
-python3 starter_kit/evaluator.py --level l2
-python3 starter_kit/cli.py "生成一个 4 比特 QFT 电路并测量"
-```
-
-> 没有 Key 也没关系：程序自动走"离线演示模式"，公开自测一样通过。
-
-#### 第八步：容器基线（官方 Dockerfile 已包含）
-
-```bash
-docker build -t loomq-submission starter_kit/
-docker run --rm loomq-submission
-```
-
-**期望输出**：容器内跑 `evaluator.py --json-out /tmp/...`，退出码 0。
-
-#### 第九步：查看端到端演示（一个脚本看完所有能力）
-
-```bash
+# ⑥ 端到端演示（翻译/运行/智能体/编译一把看完）
 python3 starter_kit/examples/run_loomq_demo.py
 ```
 
-#### 常见问题
+**以上 6 条全部成功 = 完整复现 ✅**。想深入（装 SDK、调模型、改代码做实验、
+提交 GitHub、Docker），请继续读 [🐣 小白复现完全指南](REPRODUCE_GUIDE.md)。
 
-| 问题 | 解答 |
-|---|---|
-| `import adapter` 报错？ | 必须从 `starter_kit/` 目录内运行，或按文档用 `from starter_kit import adapter` |
-| 跑 evaluator 很慢？ | L1 每平台每电路 8192 shots；本机约几秒，属正常 |
-| Windows 上 `python3` 不存在？ | 用 `py` 或 `python` |
-| 想复现"30 电路 × 3 平台"验证？ | 见 `docs/ARCHITECTURE.md` 的验证矩阵，或跑 `tests/test_l1.py` |
+### 📖 想深入？
+
+- 每一步的输出"代表什么"、怎么改代码做实验？→ [复现指南第 0~7 课](REPRODUCE_GUIDE.md#第-0-课-认识终端terminal)
+- 装官方 SDK 让 `engine=sdk`？→ [复现指南第 8 课](REPRODUCE_GUIDE.md#第-8-课可选安装官方-sdk-体验真实平台)
+- 用自己的 API Key 让智能体真调模型？→ [复现指南第 9 课](REPRODUCE_GUIDE.md#第-9-课可选用自己的-api-key-让智能体真调模型)
+- Docker / 提交 GitHub？→ [复现指南第 10、11 课](REPRODUCE_GUIDE.md#第-10-课可选用-docker-一键复现)
+
+### 🔗 和上一步的关系
+
+前 10 步造出了所有"零件"（翻译器、模拟器、智能体、编译器、量子扩展）。
+这一步把零件**装成产品**并写清楚"怎么用"——没有这一步，评委无法验证
+前面 10 步的成果；有了它，任何人都能一键复现我们的全部工作。
 
 ---
 

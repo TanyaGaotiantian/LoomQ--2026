@@ -12,7 +12,9 @@
 - 🏗️ **架构文档**：[`starter_kit/docs/ARCHITECTURE.md`](starter_kit/docs/ARCHITECTURE.md)
 - 🧭 **新手引导与视觉叙事**：[`starter_kit/docs/NEWBIE_GUIDE.md`](starter_kit/docs/NEWBIE_GUIDE.md)
 - 🧪 **证据包（人工评分入口）**：[`starter_kit/evidence/README.md`](starter_kit/evidence/README.md)
-- 🧑‍🏫 **大白话学习笔记（每一步的目的/原理/实现/踩坑/复现）**：[`starter_kit/docs/LEARNING_JOURNEY.md`](starter_kit/docs/LEARNING_JOURNEY.md)
+- 🧑‍🏫 **大白话学习笔记（每一步的目的/原理/实现/踩坑）**：[`starter_kit/docs/LEARNING_JOURNEY.md`](starter_kit/docs/LEARNING_JOURNEY.md)
+- 🔬 **知识深讲（每个知识点讲透：复数/矩阵/12 个门/编译器/机器码/LLM…）**：[`starter_kit/docs/QUANTUM_DEEP_DIVE.md`](starter_kit/docs/QUANTUM_DEEP_DIVE.md)
+- 🐣 **小白复现完全指南（终端怎么开、命令敲什么、输出代表什么、在哪改代码）**：[`starter_kit/docs/REPRODUCE_GUIDE.md`](starter_kit/docs/REPRODUCE_GUIDE.md)
 - ⚡ **立即复现**：`python3 starter_kit/evaluator.py --level all`
 
 > 以下为官方赛题发布包原始内容。
