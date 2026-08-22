@@ -153,10 +153,10 @@ def make_generator(seed):
 
 
 class TestRandomized(unittest.TestCase):
-    def test_60_programs_all_combos(self):
+    def test_150_programs_all_combos(self):
         gen = make_generator(2026)
         emu = TinyRISCVEmulator()
-        for _ in range(60):
+        for _ in range(150):
             nbits, ast = gen()
             src = to_source(ast)
             hybrid = (
