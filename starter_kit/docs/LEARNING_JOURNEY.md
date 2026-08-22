@@ -947,9 +947,9 @@ python3 starter_kit/evaluator.py --level all
 # 期望输出：6 行 [PASS] + {"passed": 6, "failed": 0, "total": 6}
 # 含义：L1 三平台翻译正确、L2 能生成 GHZ、L3 分支编译正确
 
-# ③ 全量单元测试（36 项小功能体检）
+# ③ 全量单元测试（43 项小功能体检）
 python3 starter_kit/tests/run_all.py
-# 期望输出：Ran 36 tests ... OK
+# 期望输出：Ran 43 tests ... OK
 
 # ④ Bonus 端到端（量子 RISC-V 扩展）
 python3 starter_kit/quantum_riscv/run_e2e.py

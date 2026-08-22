@@ -6,7 +6,7 @@
 
 本 fork 已按赛题要求完成 **L1（三平台统一转译）+ L2（智能体 Agent）+ L3
 （Hybrid-QASM → RISC-V 混合编译）+ Bonus（自定义量子 RISC-V 扩展）**，
-公开自测 6/6 PASS、单元测试 36/36 OK、L3 随机压力测试 150 组全通过。
+公开自测 6/6 PASS、单元测试 43/43 OK、L3 随机压力测试 150 组全通过。
 
 - 📖 **详细实现说明（逐步做了什么）**：[`starter_kit/README.md`](starter_kit/README.md)
 - 🏗️ **架构文档**：[`starter_kit/docs/ARCHITECTURE.md`](starter_kit/docs/ARCHITECTURE.md)

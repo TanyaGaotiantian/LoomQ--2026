@@ -19,10 +19,24 @@ class TestClassification(unittest.TestCase):
         self.assertEqual(classify_task("生成一个 3 比特 GHZ 态并进行全测量"), "generate")
         self.assertEqual(classify_task("生成 4 比特 QFT 电路"), "generate")
 
+    def test_generate_with_run_verb(self):
+        # hidden variants may phrase generation with 跑/运行 + a target state
+        self.assertEqual(classify_task("帮我跑一个 4 比特 GHZ 电路"), "generate")
+        self.assertEqual(classify_task("跑一个 3 比特最大纠缠态"), "generate")
+        self.assertEqual(classify_task("帮我运行一个制备贝尔态的量子电路"), "generate")
+
     def test_correct(self):
         self.assertEqual(
             classify_task("我想制备一个贝尔态，但代码报错了，帮我修好：H q[0]; CX q[0] q[1]"),
             "correct",
+        )
+
+    def test_correct_without_fix_keyword(self):
+        self.assertEqual(
+            classify_task("这段代码无法工作：H q[0]; CX q[0] q[1]"), "correct"
+        )
+        self.assertEqual(
+            classify_task("我的 3 比特电路报错了怎么办：H q[0]; CX q[0] q[1]"), "correct"
         )
 
     def test_backend(self):
@@ -33,6 +47,7 @@ class TestClassification(unittest.TestCase):
             classify_task("在真实量子硬件上跑一个 5 比特电路，不想花钱"), "backend"
         )
         self.assertEqual(classify_task("50 比特电路怎么办？"), "backend")
+        self.assertEqual(classify_task("十五比特电路，零排队，免费，选哪个平台"), "backend")
 
 
 class TestOfflineAgent(unittest.TestCase):
@@ -93,6 +108,67 @@ class TestBackendAdvisor(unittest.TestCase):
         c = parse_constraints("50 比特电路")
         cands = filter_backends(c)
         self.assertEqual({b["id"] for b in cands}, {"originq_wukong"})
+
+    def test_chinese_numerals(self):
+        c = parse_constraints("十五比特电路，零排队，免费")
+        cands = filter_backends(c)
+        ids = {b["id"] for b in cands}
+        self.assertEqual(
+            ids, {"spinq_taurus_simulator", "originq_local_simulator", "braket_local_simulator"}
+        )
+        c2 = parse_constraints("五十比特电路")
+        self.assertEqual(
+            {b["id"] for b in filter_backends(c2)}, {"originq_wukong"}
+        )
+
+
+class TestTargetFamilies(unittest.TestCase):
+    def test_w_state_offline(self):
+        from agent.verifier import build_qasm_from_prompt, extract_qasm_block, verify_qasm
+        prompt = "生成一个 3 比特 W 态并进行全测量"
+        qasm = build_qasm_from_prompt(prompt)
+        ok, _ = verify_qasm(qasm, prompt)
+        self.assertTrue(ok)
+        from qasm.simulator import ideal_distribution
+        from qasm.parser import parse_qasm
+        dist = ideal_distribution(parse_qasm(qasm))
+        self.assertAlmostEqual(dist.get("001", 0.0), 1.0 / 3, places=4)
+        self.assertAlmostEqual(dist.get("010", 0.0), 1.0 / 3, places=4)
+        self.assertAlmostEqual(dist.get("100", 0.0), 1.0 / 3, places=4)
+
+    def test_ones_offline(self):
+        from agent.verifier import build_qasm_from_prompt, verify_qasm
+        prompt = "制备一个 4 比特的全 1 态"
+        qasm = build_qasm_from_prompt(prompt)
+        ok, _ = verify_qasm(qasm, prompt)
+        self.assertTrue(ok)
+        from qasm.simulator import ideal_distribution
+        from qasm.parser import parse_qasm
+        dist = ideal_distribution(parse_qasm(qasm))
+        self.assertAlmostEqual(dist.get("1111", 0.0), 1.0)
+
+    def test_zeros_offline(self):
+        from agent.verifier import build_qasm_from_prompt, verify_qasm
+        prompt = "制备一个 3 比特基态（全 0 态）"
+        qasm = build_qasm_from_prompt(prompt)
+        ok, _ = verify_qasm(qasm, prompt)
+        self.assertTrue(ok)
+        from qasm.simulator import ideal_distribution
+        from qasm.parser import parse_qasm
+        dist = ideal_distribution(parse_qasm(qasm))
+        self.assertAlmostEqual(dist.get("000", 0.0), 1.0)
+
+    def test_w_state_bad_circuit_rejected(self):
+        from agent.verifier import verify_qasm
+        bad = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[3];
+creg c[3];
+h q[0];
+measure q -> c;
+"""
+        ok, _ = verify_qasm(bad, "生成一个 3 比特 W 态并进行全测量")
+        self.assertFalse(ok)
 
 
 class MockHandler(BaseHTTPRequestHandler):

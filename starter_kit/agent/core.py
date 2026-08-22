@@ -37,6 +37,7 @@ from typing import List, Optional, Tuple
 from agent.backend_advisor import (
     CANONICAL_IDS,
     build_recommendation_reply,
+    cn_to_int,
     correct_backend_ids,
 )
 from agent.prompts import PROMPTS
@@ -91,15 +92,39 @@ _CORRECT_RE = re.compile(
     r"(修|修复|改|纠错|报错|错误|fix|correct|repair|broken|wrong|debug)",
     re.IGNORECASE,
 )
+_ERROR_HINT_RE = re.compile(
+    r"(报错|错误|无法|无效|有问题|不行|出错|失败|崩溃|error|bug|broken|wrong|invalid|fails?|failed|doesn'?t\s+work|not\s+work)",
+    re.IGNORECASE,
+)
+_CREATE_VERB_RE = re.compile(
+    r"(生成|创建|创造|写|编写|构建|制备|搭建|制作|构造|make|create|build|write|generate|construct|prepare)",
+    re.IGNORECASE,
+)
 
 
 def classify_task(prompt: str) -> str:
+    """Classify a prompt as generate / correct / backend.
+
+    Ordering is deliberate so that hidden prompt variants survive:
+    1. correction language (fix/error) wins when code is present,
+    2. explicit platform selection wins for backend advice,
+    3. a declared target state (GHZ/Bell/QFT/...) wins over the generic
+       run-verb backend rule, so "跑一个 4 比特 GHZ 电路" is generation,
+    4. only then does the generic run-verb + constraint rule classify backend.
+    """
     text = prompt.strip()
     has_code = extract_gates_from_broken_code(text) is not None
-    if has_code and _CORRECT_RE.search(text):
+    error_intent = bool(_CORRECT_RE.search(text) or _ERROR_HINT_RE.search(text))
+    if error_intent and (has_code or _CORRECT_RE.search(text)):
         return "correct"
     if _BACKEND_ASK_RE.search(text) and _BACKEND_CONSTRAINT_RE.search(text):
         return "backend"
+    target = detect_target(text)
+    has_target_intent = target not in ("unknown", "basis")
+    if has_target_intent and (
+        _CREATE_VERB_RE.search(text) or _RUN_VERB_RE.search(text) or has_code
+    ):
+        return "generate"
     if _RUN_VERB_RE.search(text) and _BACKEND_CONSTRAINT_RE.search(text):
         return "backend"
     return "generate"
@@ -251,6 +276,10 @@ def _offline_fix(prompt: str) -> str:
     m = re.search(r"(\d+)\s*(?:个\s*)?(?:量子\s*)?(?:比特|qubits?)", prompt, re.IGNORECASE)
     if m:
         n = int(m.group(1))
+    else:
+        cn = cn_to_int(prompt)
+        if cn is not None and re.search(r"比特|qubits?", prompt, re.IGNORECASE):
+            n = cn
     synthetic = (
         f"生成一个 {n} 比特的 {detect_target(prompt) or 'GHZ'} 态并进行全测量"
     )

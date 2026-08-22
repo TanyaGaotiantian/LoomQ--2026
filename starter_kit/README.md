@@ -161,6 +161,12 @@ Hybrid-QASM ──► L3 hybrid/compiler.py ──► (量子操作序列, RISC-
 `agent/verifier.py` 会从 prompt 解析约束（比特数、目标态）**构造并自验**
 电路——不是对公开样例的字符串匹配表，而是真正的约束驱动生成器。
 
+**隐藏变体加固**（针对官方"改写措辞"的评测变体，均有单元测试）：
+分类器按"修复意图 → 显式选平台 → 目标态意图"排序，`帮我跑一个 4 比特
+GHZ 电路`不会被误判为选后端；后端约束支持中文数字比特数（"十五比特"）；
+验证器目标态族覆盖 GHZ/Bell/QFT/Grover/均匀叠加/W/全 1/全 0，其中 W3
+由白名单门精确制备（ry + cx + ccx 受控构造，数值验证三种单激发态各 1/3）。
+
 ### 5.3 CLI 用户体验（`cli.py`）
 
 ```
@@ -215,7 +221,7 @@ Hybrid-QASM ──► L3 hybrid/compiler.py ──► (量子操作序列, RISC-
 - **一键复现**：`docker build -t loomq-submission . && docker run --rm loomq-submission`
   或直接 `python3 evaluator.py --level all`。
 - **架构清晰**：`docs/ARCHITECTURE.md`；模块单一职责、类型标注、中文注释。
-- **质量保障**：36 个单元测试（`python3 tests/run_all.py`）+ 公开自测 6/6。
+- **质量保障**：43 个单元测试（`python3 tests/run_all.py`）+ 公开自测 6/6。
 
 ## 9. 如何复现
 
@@ -223,7 +229,7 @@ Hybrid-QASM ──► L3 hybrid/compiler.py ──► (量子操作序列, RISC-
 # 1. 公开契约自测（零依赖，任何 Python 3.9+ 环境）
 cd starter_kit && python3 evaluator.py --level all
 
-# 2. 全量单元测试（36 项）
+# 2. 全量单元测试（43 项）
 python3 tests/run_all.py
 
 # 3. 三平台跑通公开电路（含 fidelity 报告）
@@ -266,7 +272,7 @@ python3 evaluator.py --level l2
 | 8 | 实现 Bonus：编码规格、fork 模拟器、端到端测试 | `quantum_riscv/`（9/9） |
 | 9 | 实现交互 CLI 与可视化 | `cli.py` |
 | 10 | 接入 `adapter.py` 契约、更新 `submission.yaml`、`requirements.txt` | 公开自测 6/6 |
-| 11 | 编写 36 个单元测试、架构文档、新手引导、证据包 | `tests/` `docs/` `evidence/` |
+| 11 | 编写 43 个单元测试、架构文档、新手引导、证据包 | `tests/` `docs/` `evidence/` |
 | 12 | 运行 `prepare_submission.py` 预检并提交推送 | 本次提交 |
 
 ## 11. 反作弊合规说明

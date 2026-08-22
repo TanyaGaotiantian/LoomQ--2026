@@ -16,6 +16,7 @@ import math
 import re
 from typing import Dict, List, Optional, Tuple
 
+from agent.backend_advisor import cn_to_int
 from qasm.parser import parse_qasm, QasmSyntaxError, WHITELIST
 from qasm.simulator import ideal_distribution, sample_counts
 
@@ -86,12 +87,15 @@ def extract_gates_from_broken_code(text: str) -> Optional[Tuple[str, int]]:
 # ---------------------------------------------------------------------------
 
 _TARGET_PATTERNS: List[Tuple[str, re.Pattern]] = [
+    ("w", re.compile(r"(w\s*态|w\s*state)", re.IGNORECASE)),
     ("ghz", re.compile(r"(ghz|最大纠缠态|纠缠态|maximally\s*entangled|猫态|cat\s*state)", re.IGNORECASE)),
     ("bell", re.compile(r"(bell|贝尔态|bell\s*state|epr)", re.IGNORECASE)),
     ("qft", re.compile(r"(qft|傅里叶|fourier)", re.IGNORECASE)),
     ("grover", re.compile(r"(grover|格罗弗|搜索算法|search)", re.IGNORECASE)),
     ("superposition", re.compile(r"(叠加态|superposition|均匀叠加)", re.IGNORECASE)),
-    ("basis", re.compile(r"(基态|basis|本征态)", re.IGNORECASE)),
+    ("ones", re.compile(r"(全\s*[1一]\s*态|all\s*-?\s*ones|\|[1一]+\s*[⟩>])", re.IGNORECASE)),
+    ("zeros", re.compile(r"(全\s*[0零]\s*态|all\s*-?\s*zeros|基态|\|[0零]+\s*[⟩>])", re.IGNORECASE)),
+    ("basis", re.compile(r"(basis|本征态)", re.IGNORECASE)),
 ]
 
 
@@ -110,14 +114,19 @@ def expected_distribution(target: str, n: int) -> Dict[str, float]:
         return {"00": 0.5, "11": 0.5}
     if target == "ghz":
         return {"0" * n: 0.5, "1" * n: 0.5}
+    if target == "w":
+        # W state: uniform over the n single-excitation basis states
+        return {format(1 << i, "0%db" % n): 1.0 / n for i in range(n)}
     if target in ("qft", "superposition"):
         size = 1 << n
         return {format(i, "0%db" % n): 1.0 / size for i in range(size)}
     if target == "grover":
         # single-iteration Grover search for |11..1>: dominant peak at all-ones
         return {"1" * n: 0.9}
-    if target == "basis":
-        return {}
+    if target == "ones":
+        return {"1" * n: 1.0}
+    if target == "zeros":
+        return {"0" * n: 1.0}
     return {}
 
 
@@ -170,6 +179,9 @@ def _parse_qubit_count(prompt: str) -> int:
     )
     if m:
         return max(1, min(int(m.group(1)), 12))
+    cn = cn_to_int(prompt)
+    if cn is not None and re.search(r"比特|qubits?|qbits?", prompt, re.IGNORECASE):
+        return max(1, min(cn, 12))
     return 3
 
 
@@ -189,12 +201,18 @@ def build_qasm_from_prompt(prompt: str) -> str:
             lines += [f"cx q[{i}], q[{i + 1}];" for i in range(1, n - 1)]
     elif target == "ghz":
         lines += ["h q[0];"] + [f"cx q[{i}], q[{i + 1}];" for i in range(n - 1)]
+    elif target == "w":
+        lines += _build_w_state(n)
     elif target == "qft":
         lines += _build_qft(n)
     elif target == "grover":
         lines += _build_grover(n)
     elif target == "superposition":
         lines += [f"h q[{i}];" for i in range(n)]
+    elif target == "ones":
+        lines += [f"x q[{i}];" for i in range(n)]
+    elif target == "zeros":
+        pass  # |0...0> is the input state; just measure
     else:
         # fallback: GHZ (the canonical "maximally entangled" family)
         lines += ["h q[0];"] + [f"cx q[{i}], q[{i + 1}];" for i in range(n - 1)]
@@ -206,6 +224,37 @@ def build_qasm_from_prompt(prompt: str) -> str:
     if not ok:
         qasm = _simple_circuit(n)
     return qasm
+
+
+def _build_w_state(n: int) -> List[str]:
+    """Exact W3 preparation (verified numerically against the simulator).
+
+    W3 = (|001> + |010> + |100>)/sqrt(3) = sqrt(2/3) |0>⊗W2 + 1/sqrt(3) |001>.
+
+    Construction (all gates inside the 12-gate whitelist):
+      1. ry(θ) q[2] with sin(θ/2)=1/sqrt(3) puts amplitude 1/sqrt(3) on |001>
+         and sqrt(2/3) on |000>.
+      2. On the q[2]=0 branch, prepare W2 = (|01>+|10>)/sqrt(2) on (q[0], q[1])
+         via the "X-flip then undo" trick for a control-at-0:
+         x q[2]; [C-H: ry(pi/4) h cx h ry(-pi/4)] q[0]; ccx q[2],q[0],q[1];
+         cx q[2],q[1]; x q[2].
+    Only n=3 is supported (the textbook W-state example); other sizes fall back
+    to the caller's self-verify safety net.
+    """
+    if n != 3:
+        return []
+    return [
+        "ry(1.2309594173) q[2];",
+        "x q[2];",
+        "ry(0.7853981634) q[0];",
+        "h q[0];",
+        "cx q[2], q[0];",
+        "h q[0];",
+        "ry(-0.7853981634) q[0];",
+        "ccx q[2], q[0], q[1];",
+        "cx q[2], q[1];",
+        "x q[2];",
+    ]
 
 
 def _build_qft(n: int) -> List[str]:

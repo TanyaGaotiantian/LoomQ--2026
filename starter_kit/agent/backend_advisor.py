@@ -55,14 +55,51 @@ _KIND_SIM_RE = re.compile(r"(模拟器|本地模拟|simulator|simulation|本地)
 _ACCOUNT_RE = re.compile(r"(不用注册|无需注册|不需要账号|不用账号|no\s*account|no\s*sign)", re.IGNORECASE)
 
 
-def _extract_qubits(text: str) -> Optional[Tuple[int, Optional[int]]]:
-    """Return (min, max) qubit constraint if any, else None."""
-    m = _INT_RE.search(text)
+_CN_NUM_RE = re.compile(r"[零一二两三四五六七八九十百]+")
+_CN_DIGITS = {"零": 0, "一": 1, "两": 2, "二": 2, "三": 3, "四": 4, "五": 5,
+              "六": 6, "七": 7, "八": 8, "九": 9}
+_CN_UNITS = {"十": 10, "百": 100}
+
+
+def cn_to_int(text: str) -> Optional[int]:
+    """Convert a Chinese numeral (一..九百九十九, e.g. 十五/三十五/一百/两百) to int."""
+    m = _CN_NUM_RE.search(text)
     if not m:
         return None
-    lo = int(m.group(1))
-    hi = int(m.group(2)) if m.group(2) else lo
-    return (lo, max(lo, hi))
+    s = m.group(0)
+    total = 0
+    current = 0
+    for ch in s:
+        if ch in _CN_DIGITS:
+            current = _CN_DIGITS[ch]
+        elif ch in _CN_UNITS:
+            unit = _CN_UNITS[ch]
+            total += (current if current else 1) * unit
+            current = 0
+    total += current
+    return total if total > 0 else None
+
+
+_CN_QUBITS_RE = re.compile(r"([零一二两三四五六七八九十百]+)\s*(?:个)?\s*(?:量子)?\s*(?:比特|qubits?|qbits?)", re.IGNORECASE)
+
+
+def _extract_qubits(text: str) -> Optional[Tuple[int, Optional[int]]]:
+    """Return (min, max) qubit constraint if any, else None.
+
+    Supports Arabic numerals ("15 比特", "3-5 qubits") and Chinese numerals
+    ("十五比特", "五十个量子比特").
+    """
+    m = _INT_RE.search(text)
+    if m:
+        lo = int(m.group(1))
+        hi = int(m.group(2)) if m.group(2) else lo
+        return (lo, max(lo, hi))
+    m = _CN_QUBITS_RE.search(text)
+    if m:
+        value = cn_to_int(m.group(1))
+        if value is not None:
+            return (value, value)
+    return None
 
 
 def _extract_platform(text: str) -> Optional[str]:

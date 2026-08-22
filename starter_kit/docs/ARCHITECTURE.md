@@ -89,4 +89,4 @@ Hybrid-QASM 文本
 | L3 编译器 | 150 随机程序 × 全测量组合 vs 参考解释器 | 0 失败 |
 | Bonus | `run_e2e.py` | 9/9 |
 | 契约 | 公开 `evaluator.py --level all` | 6/6 PASS |
-| 单元测试 | `tests/run_all.py` | 36/36 OK |
+| 单元测试 | `tests/run_all.py` | 43/43 OK |
